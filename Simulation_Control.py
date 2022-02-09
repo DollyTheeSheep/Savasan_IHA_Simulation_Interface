@@ -9,7 +9,7 @@ class HZ5(threading.Thread):
     def run(self):
         while not self.stopped.wait(0.2):
             print("5 HZ")
-
+            print("Commit Deneme")
 class HZ10(threading.Thread):
     def __init__(self, event):
         threading.Thread.__init__(self)
