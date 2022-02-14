@@ -4,6 +4,19 @@ import pygame,time
 from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
 import time
 from pymavlink import mavutil
+class mavlnk():
+    def mavlnk_init(self):
+        self.vehicle = connect("tcp:127.0.0.1:5762", wait_ready=True, baud=57600)
+        print("mavlink baglanti")
+    def mavlnk_kumanda_verilerini_gonder(self,aileron,pitch,throttle,yaw,mode):
+        if mode < 1500 :
+            self.vehicle.mode = "AUTO"
+        else :
+            self.vehicle.mode = "FBWA"
+            self.vehicle.channels.overrides['1'] = aileron
+            self.vehicle.channels.overrides['2'] = pitch
+            self.vehicle.channels.overrides['3'] = throttle
+            self.vehicle.channels.overrides['4'] = yaw
 
 class controller():
     def controller_init(self):
@@ -26,9 +39,9 @@ class controller():
         for event in pygame.event.get():
             if event.type == pygame.JOYAXISMOTION:
                 if (event.axis == 0):
-                    self.axis0=2200-self.custom_map(round(event.value,2),1,-1,0,1100)
+                    self.axis0=2120-self.custom_map(round(event.value,2),1,-1,0,1100)
                 if (event.axis == 1):
-                    self.axis1=1100+self.custom_map(round(event.value,2),1,-1,0,1100)
+                    self.axis1=1980-self.custom_map(round(event.value,2),1,-1,0,1100)
                 if (event.axis == 2):
                     self.axis2=1100+self.custom_map(round(event.value,2),1,-1,0,1100)
                 if (event.axis == 3):
@@ -46,12 +59,17 @@ class HZ5(threading.Thread):
     def __init__(self, event):
         threading.Thread.__init__(self)
         self.stopped = event
+        # /------------------------------------------------------- Mavlink Baglantisi Yapildi -------------------------------------------------------\#
+        global baglanti
+        baglanti = mavlnk()
+        baglanti.mavlnk_init()
 
     def run(self):
         while not self.stopped.wait(0.2):
-            #/------------------------------------------------------- 5 Hz ile yapilmasi gereken islemleri buranin altina yaz -------------------------------------------------------\#
-
-            print("5 HZ")
+            #/------------------------------------------------------- 5 Hz Ile Yapilmasi Gereken Islemleri Buranin Altina Yaz -------------------------------------------------------\#
+            baglanti.mavlnk_kumanda_verilerini_gonder(kumanda.axis0,kumanda.axis1,kumanda.axis2,kumanda.axis5,kumanda.axis3)
+            # Normalde 1 tane axis gonderilse 5 hz fakat 4 axis gonderildigi icin mavlink inspector da 20 hz goruluyor.
+            #print("5 Hz")
 
 class HZ10(threading.Thread):
     def __init__(self, event):
@@ -74,7 +92,7 @@ if __name__ == '__main__':
     thread_10HZ = HZ10(stopFlag)
 
     #/------------------------------------------------------- Sayaçları Başlat -------------------------------------------------------\#
-    #thread_5HZ.start()
+    thread_5HZ.start()
     thread_10HZ.start()
 
 
