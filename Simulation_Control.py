@@ -6,7 +6,7 @@ import time
 from pymavlink import mavutil
 class mavlnk():
     def mavlnk_init(self):
-        self.vehicle = connect("tcp:127.0.0.1:5762", wait_ready=True, baud=57600)
+        self.vehicle = connect("192.168.1.10:14560", wait_ready=True)
         print("mavlink baglanti")
     def mavlnk_kumanda_verilerini_gonder(self,aileron,pitch,throttle,yaw,mode):
         if mode < 1500 :
