@@ -108,6 +108,8 @@ class Ui_MainWindow(object):
 
         self.cmds.add(self.cmd1)
         self.cmds.upload()
+        self.vehicle.mode = "FBWA"
+        self.vehicle.mode = "AUTO"
 
 if __name__ == "__main__":
     import sys
