@@ -1,19 +1,25 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'INTERFACE.ui'
+# Form implementation generated from reading ui file 'INTERFACE4.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
+import sys
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+import cv2
 from dronekit import connect , Command
 from pymavlink import mavutil
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(490, 193)
+        MainWindow.resize(1555, 739)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
@@ -42,6 +48,12 @@ class Ui_MainWindow(object):
         self.iha_durum_2 = QtWidgets.QLineEdit(self.centralwidget)
         self.iha_durum_2.setGeometry(QtCore.QRect(210, 20, 113, 20))
         self.iha_durum_2.setObjectName("iha_durum_2")
+        self.goruntu = QtWidgets.QLabel(self.centralwidget)
+        self.goruntu.setGeometry(QtCore.QRect(80, 150, 531, 531))
+        self.goruntu.setObjectName("goruntu")
+        self.goruntu_2 = QtWidgets.QLabel(self.centralwidget)
+        self.goruntu_2.setGeometry(QtCore.QRect(660, 150, 531, 531))
+        self.goruntu_2.setObjectName("goruntu_2")
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -50,9 +62,22 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        #BUTONLAR
+        # GORUNTU
+        self.Worker1 = Worker1()
+        self.Worker1.start()
+        self.Worker1.ImageUpdate.connect(self.ImageUpdateSlot)
+        # BUTONLAR
         self.baglanti.clicked.connect(self.iha_baglan)
         self.KAMIKAZEHAZIRLIK.clicked.connect(self.kamikaze_hazirlik)
+        # GORUNTU
+
+    def ImageUpdateSlot(self, Image):
+        self.goruntu.setPixmap(QPixmap.fromImage(Image))
+        self.goruntu_2.setPixmap(QPixmap.fromImage(Image))
+
+    def CancelFeed(self):
+        self.Worker1.stop()
+        # END GORUNTU
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -67,22 +92,24 @@ class Ui_MainWindow(object):
         self.KAMIKAZEDALIS.setText(_translate("MainWindow", "KAMIKAZE DALIS"))
         self.baglanti.setText(_translate("MainWindow", "IHA\'YA BAGLAN"))
         self.iha_durum_2.setText(_translate("MainWindow", "tcp:127.0.0.1:5762"))
+        self.goruntu.setText(_translate("MainWindow", "DODO"))
+
         self.baglanti_sayac = 0
         self.hedef_lat = [40.233100, 40.229447, 40.229251, 40.231986]
         self.hedef_lon = [29.001739, 29.002554, 29.009313, 29.010343]
 
     def iha_baglan(self):
-        if len(self.iha_durum_2.text())<1:
+        if len(self.iha_durum_2.text()) < 1:
             msg = QMessageBox()
             msg.setWindowTitle("BAGLANTI UYARISI")
             msg.setText("GECERLI BIR BAGLANTI IP'SI GIRIN")
             msg.setIcon(QMessageBox.Critical)
-            x=msg.exec_()
+            x = msg.exec_()
         if self.baglanti_sayac == 0:
             self.vehicle = connect(self.iha_durum_2.text(), wait_ready=True)
             self.baglanti.setStyleSheet("background-color : green")
-            self.baglanti_sayac+=1
-        else :
+            self.baglanti_sayac += 1
+        else:
             msg = QMessageBox()
             msg.setWindowTitle("BAGLANTI UYARISI")
             msg.setText("CIHAZLA BAGLANTI ZATEN VAR")
@@ -90,26 +117,66 @@ class Ui_MainWindow(object):
             x = msg.exec_()
             self.iha_durum.setText(str(self.vehicle.mode))
 
-
     def kamikaze_hazirlik(self):
         if self.baglanti_sayac > 0:
             self.kamikaze_hazirlik_sec(self.comboBox.currentText())
-    def kamikaze_hazirlik_sec(self,hedef):
+
+    def kamikaze_hazirlik_sec(self, hedef):
         sayac = int(hedef[5:])
-        print(self.hedef_lat[sayac-1],self.hedef_lon[sayac-1])
+        print(self.hedef_lat[sayac - 1], self.hedef_lon[sayac - 1])
 
         self.cmds = self.vehicle.commands
         self.cmds.download()
         self.cmds.wait_ready()
         self.cmds.clear()
 
-        self.cmd1 = Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LOITER_UNLIM, 0,
-                       0, 0, 0, 250, 0, self.hedef_lat[sayac-1], self.hedef_lon[sayac-1], 100)
+        self.cmd1 = Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                            mavutil.mavlink.MAV_CMD_NAV_LOITER_UNLIM, 0,
+                            0, 0, 0, 250, 0, self.hedef_lat[sayac - 1], self.hedef_lon[sayac - 1], 100)
 
         self.cmds.add(self.cmd1)
         self.cmds.upload()
         self.vehicle.mode = "FBWA"
         self.vehicle.mode = "AUTO"
+
+
+# GORUNTU
+class Worker1(QThread):
+    ImageUpdate = pyqtSignal(QImage)
+
+    def run(self):
+        self.ThreadActive = True
+        Capture = cv2.VideoCapture(0)
+        while self.ThreadActive:
+            ret, frame = Capture.read()
+            if ret:
+                Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                FlippedImage = cv2.flip(Image, 1)
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0],
+                                           QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.comboBox.setCurrentText(_translate("MainWindow", "NOKTA 1"))
+        self.comboBox.setItemText(0, _translate("MainWindow", "NOKTA 1"))
+        self.comboBox.setItemText(1, _translate("MainWindow", "NOKTA 2"))
+        self.comboBox.setItemText(2, _translate("MainWindow", "NOKTA 3"))
+        self.comboBox.setItemText(3, _translate("MainWindow", "NOKTA 4"))
+        self.label.setText(_translate("MainWindow", "KAMIKAZE SECENEKLERI"))
+        self.KAMIKAZEHAZIRLIK.setText(_translate("MainWindow", "KAMIKAZE HAZIRLIK"))
+        self.KAMIKAZEDALIS.setText(_translate("MainWindow", "KAMIKAZE DALIS"))
+        self.baglanti.setText(_translate("MainWindow", "IHA\'YA BAGLAN"))
+        self.iha_durum_2.setText(_translate("MainWindow", "tcp:127.0.0.1:5762"))
+        self.goruntu.setText(_translate("MainWindow", "DODO"))
+        self.goruntu_2.setText(_translate("MainWindow", "DODO2"))
+
 
 if __name__ == "__main__":
     import sys
@@ -118,6 +185,5 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    print("dongu")
     sys.exit(app.exec_())
 
