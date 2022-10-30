@@ -4,6 +4,36 @@ import pygame,time
 from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
 import time
 from pymavlink import mavutil
+import keyboard
+
+class keyboard_controller():
+    def keyboard_init(self):
+        self.axis0 = 1500  # ROLL
+        self.axis1 = 1500  # PITCH
+        self.axis2 = 1100  # THROTTLE
+        self.axis3 = 0  # MODE
+        self.axis4 = 0  # BOS
+        self.axis5 = 1500  # YAW
+    def keyboard_oku(self):
+        if keyboard.read_key() == "w":
+            self.axis1 =- 50
+        if keyboard.read_key() == "s":
+            self.axis1 =+ 50
+        if keyboard.read_key() == "d":
+            self.axis0 =+ 50
+        if keyboard.read_key() == "a":
+            self.axis0 =- 50
+        if keyboard.read_key() == "+":
+            self.axis2 =+ 50
+        if keyboard.read_key() == "-":
+            self.axis2 =- 50
+        if keyboard.read_key() == "m":
+            self.axis3 = 2000
+        if keyboard.read_key() == "o":
+            self.axis1 = 1000
+        print("Axis0-ROLL:", self.axis0, "Axis1-PITCH:", self.axis1, "Axis2-THROTTLE:", self.axis2, "Axis3-MODE:",
+              self.axis3, "Axis4:", self.axis4, "Axis5-YAW:", self.axis5)
+
 class mavlnk():
     def mavlnk_init(self):
         self.vehicle = connect("192.168.1.10:14560", wait_ready=True)
@@ -79,10 +109,14 @@ class HZ10(threading.Thread):
         global kumanda
         kumanda = controller()
         kumanda.controller_init()
+        global klavye
+        klavye = keyboard_controller()
+        klavye.keyboard_init()
     def run(self):
         while not self.stopped.wait(0.1):
             #/------------------------------------------------------- 10 Hz ile yapilmasi gereken islemleri buranin altina yaz -------------------------------------------------------\#
-            kumanda.kumanda_oku()
+            #kumanda.kumanda_oku()
+            klavye.keyboard_oku()
 
 
 if __name__ == '__main__':

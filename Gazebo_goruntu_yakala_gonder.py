@@ -12,7 +12,7 @@ class goruntu:
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
         self.host_name = socket.gethostname()
-        self.host_ip = '127.0.0.1'  # socket.gethostbyname(host_name)
+        self.host_ip = '192.168.1.20'  # socket.gethostbyname(host_name)
         print(self.host_ip)
         self.port = 9999
         self.socket_address = (self.host_ip, self.port)
