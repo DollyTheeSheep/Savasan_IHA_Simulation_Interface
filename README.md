@@ -1,1 +1,1 @@
-You can find code under diffirent branch.
+You can find codes under branch section.
